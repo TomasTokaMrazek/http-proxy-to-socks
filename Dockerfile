@@ -1,4 +1,4 @@
-FROM node:slim
+FROM node:20-bookworm
 
 RUN npm install -g http-proxy-to-socks
 
