@@ -1,14 +1,24 @@
 {
-  "extends": "airbnb/base",
-  "globals": {
-    "expect": true,
-    "it": true,
-    "describe": true,
-    "beforeEach": true,
-    "jest": true
-  },
-  "rules": {
-    "no-underscore-dangle": 0,
-    "comma-dangle": 0
-  }
+    "extends": [
+        "airbnb-base",
+        "airbnb-typescript/base"
+    ],
+    "parserOptions": {
+        "project": "./tsconfig.json"
+    },
+    "globals": {
+        "expect": true,
+        "it": true,
+        "describe": true,
+        "beforeEach": true,
+        "jest": true
+    },
+    "rules": {
+        "no-console": "off",
+        "prefer-destructuring": "off",
+        "@typescript-eslint/indent": "off",
+        "@typescript-eslint/quotes": "off",
+        "@typescript-eslint/comma-dangle": ["error", "never"],
+        "@typescript-eslint/object-curly-spacing": ["error", "never"]
+    }
 }

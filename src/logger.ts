@@ -29,24 +29,23 @@ function getFormatedDate() {
 
 function createTransports() {
   return [
-    new Console(Object.assign({}, DEFAULT_COMMON_OPTIONS)),
+    new Console({ ...DEFAULT_COMMON_OPTIONS }),
   ];
 }
 
 function colorLevel(str) {
   if (str === 'error') {
     return chalk.red(str);
-  } else if (str === 'info') {
+  }
+  if (str === 'info') {
     return chalk.green(str);
   }
-
   return str;
 }
 
 function createLogger(level = 'warn') {
   return createWinstonLogger({
-    format: combine(printf(info =>
-        `${getFormatedDate()} - ${colorLevel(info.level)} ${info.message}`)),
+    format: combine(printf((info) => `${getFormatedDate()} - ${colorLevel(info.level)} ${info.message}`)),
     level,
     transports: createTransports(),
   });
