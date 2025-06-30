@@ -5,6 +5,7 @@ const http = require('http');
 const fs = require('fs');
 const Socks = require('socks');
 const { logger } = require('./logger');
+const { SocksProxyAgent } = require('socks-proxy-agent');
 
 function randomElement(array) {
   return array[Math.floor(Math.random() * array.length)];
@@ -29,23 +30,42 @@ function parseProxyLine(line) {
   return getProxyObject.apply(this, proxyInfo);
 }
 
+function getFromRawHeaders(rawHeaders) {
+  const headers = {};
+
+  if (!Array.isArray(rawHeaders)) {
+    return headers;
+  }
+
+  for (let i = 0; i < rawHeaders.length; i += 2) {
+    const key = rawHeaders[i];
+    const value = rawHeaders[i + 1] || '';
+
+    headers[key] = headers[key] || [];
+    headers[key].push(value);
+  }
+
+  return headers;
+}
+
 function requestListener(getProxyInfo, request, response) {
   logger.info(`request: ${request.url}`);
 
   const proxy = getProxyInfo();
   const ph = url.parse(request.url);
 
-  const socksAgent = new Socks.Agent({
-    proxy,
-    target: { host: ph.hostname, port: ph.port },
+  const socksAgentOptions = Object.assign({}, proxy, {
+    host: ph.hostname, port: ph.port,
   });
+
+  const socksAgent = new SocksProxyAgent(socksAgentOptions);
 
   const options = {
     port: ph.port,
     hostname: ph.hostname,
     method: request.method,
     path: ph.path,
-    headers: request.headers,
+    headers: getFromRawHeaders(request.rawHeaders),
     agent: socksAgent,
   };
 
@@ -79,8 +99,12 @@ function connectListener(getProxyInfo, request, socketRequest, head) {
   const { hostname: host, port } = ph;
 
   const options = {
-    proxy,
-    target: { host, port },
+    proxy: {
+      host: proxy.ipaddress,
+      port: parseInt(proxy.port, 10),
+      type: proxy.type,
+    },
+    destination: { host, port: parseInt(port, 10) },
     command: 'connect',
   };
 
@@ -93,15 +117,15 @@ function connectListener(getProxyInfo, request, socketRequest, head) {
     }
   });
 
-  Socks.createConnection(options, (error, _socket) => {
-    socket = _socket;
-
+  Socks.SocksClient.createConnection(options, (error, info) => {
     if (error) {
       // error in SocksSocket creation
       logger.error(`${error.message} connection creating on ${proxy.ipaddress}:${proxy.port}`);
       socketRequest.write(`HTTP/${request.httpVersion} 500 Connection error\r\n\r\n`);
       return;
     }
+
+    socket = info.socket;
 
     socket.on('error', (err) => {
       logger.error(`${err.message}`);
@@ -120,7 +144,7 @@ function connectListener(getProxyInfo, request, socketRequest, head) {
 
 function ProxyServer(options) {
   // TODO: start point
-  http.Server.call(this, () => {});
+  http.Server.call(this, () => { });
 
   this.proxyList = [];
 
@@ -194,4 +218,5 @@ module.exports = {
   connectListener,
   getProxyObject,
   parseProxyLine,
+  getFromRawHeaders,
 };

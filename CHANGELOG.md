@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.1.5
+- deps: upgrade socks and other deps
+
+## 1.1.3, 1.1.4
+- chore: keep header cases
+
 ## 1.1.1
 - src: Use parsed url hostname instead of host which may contain also port
 
